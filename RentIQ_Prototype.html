@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentIQ — AI Rental Pricing Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+  :root {
+    --ink: #0D1B2A;
+    --accent: #1B4F72;
+    --blue: #2471A3;
+    --blue-light: #D6EAF8;
+    --teal: #148F77;
+    --teal-pale: #D1F2EB;
+    --amber: #CA6F1E;
+    --amber-pale: #FDEBD0;
+    --red: #922B21;
+    --red-pale: #FADBD8;
+    --white: #FFFFFF;
+    --off-white: #F8FAFC;
+    --surface: #F1F5F9;
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
+    --muted: #64748B;
+    --muted-light: #94A3B8;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--ink); height: 100%; font-size: 14px; line-height: 1.5; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--accent);
+    padding: 0 20px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+  .logo { display: flex; align-items: center; gap: 8px; color: #fff; font-family: 'DM Serif Display', serif; font-size: 20px; letter-spacing: .3px; }
+  .logo-mark { width: 28px; height: 28px; background: var(--teal); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #fff; }
+  .topbar-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; letter-spacing: .04em; }
+  .badge-ai { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+  .badge-live { background: rgba(20,143,119,.25); color: #7DEFE0; border: 1px solid rgba(20,143,119,.3); }
+  .topbar-spacer { flex: 1; }
+  .topbar-user { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.8); font-size: 12px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; color: #fff; }
+  .topbar-nav { display: flex; gap: 0; margin-left: 20px; }
+  .nav-tab { padding: 0 16px; height: 52px; display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,.65); font-size: 13px; cursor: pointer; border-bottom: 3px solid transparent; transition: all .15s; }
+  .nav-tab:hover { color: #fff; background: rgba(255,255,255,.08); }
+  .nav-tab.active { color: #fff; border-bottom-color: var(--teal); }
+  .nav-tab i { font-size: 16px; }
+
+  /* ── LAYOUT ── */
+  .workspace { display: flex; height: calc(100vh - 52px); overflow: hidden; }
+  .screen { display: none; width: 100%; }
+  .screen.active { display: flex; }
+
+  /* ── LEFT SIDEBAR ── */
+  .sidebar {
+    width: 296px;
+    min-width: 296px;
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+  .panel-hdr {
+    padding: 10px 16px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    background: var(--off-white);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .panel-hdr i { font-size: 13px; }
+
+  .form-block { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .form-row { margin-bottom: 10px; }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; display: block; font-weight: 500; }
+  .form-row input, .form-row select {
+    width: 100%; font-size: 13px; padding: 7px 10px;
+    border-radius: var(--radius); border: 1px solid var(--border-strong);
+    background: var(--white); color: var(--ink);
+    transition: border-color .15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .form-row input:focus, .form-row select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(36,113,163,.1); }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .enrich-btn {
+    width: 100%; padding: 9px; background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background .15s; display: flex; align-items: center;
+    justify-content: center; gap: 6px; font-family: 'DM Sans', sans-serif;
+  }
+  .enrich-btn:hover { background: #154360; }
+
+  /* ── SIGNAL CARDS ── */
+  .signals-wrap { padding: 12px; border-bottom: 1px solid var(--border); }
+  .signals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sig-card {
+    padding: 9px 10px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--off-white);
+  }
+  .sig-label { font-size: 10px; color: var(--muted); margin-bottom: 3px; display: flex; align-items: center; gap: 3px; font-weight: 500; }
+  .sig-label i { font-size: 12px; }
+  .sig-val { font-size: 13px; font-weight: 600; }
+  .sig-val.pos { color: var(--teal); }
+  .sig-val.warn { color: var(--amber); }
+  .sig-val.neg { color: var(--red); }
+  .sig-bar { height: 3px; border-radius: 2px; margin-top: 5px; background: var(--border); position: relative; overflow: hidden; }
+  .sig-bar-fill { height: 100%; border-radius: 2px; position: absolute; top: 0; left: 0; }
+  .sig-src { font-size: 9px; color: var(--muted-light); margin-top: 3px; }
+  .ci-note { padding: 8px 16px 10px; font-size: 10px; color: var(--muted); line-height: 1.5; border-bottom: 1px solid var(--border); }
+
+  /* ── CENTER ── */
+  .center {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    background: var(--surface);
+    min-width: 0;
+  }
+  .center::-webkit-scrollbar { width: 4px; }
+  .center::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+  .section-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .section-hdr-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .section-hdr-title i { font-size: 16px; color: var(--teal); }
+  .count-badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: var(--teal-pale); color: #085041; }
+
+  .notif {
+    background: var(--blue-light); border: 1px solid #AED6F1;
+    border-radius: var(--radius); padding: 9px 12px;
+    font-size: 12px; color: #1B4F72;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .notif i { font-size: 16px; flex-shrink: 0; }
+
+  /* ── COMP CARDS ── */
+  .comp-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 12px 14px;
+    transition: all .15s; box-shadow: var(--shadow);
+  }
+  .comp-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+  .comp-card.removed { opacity: .3; filter: grayscale(1); }
+  .comp-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .comp-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .comp-sector { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .sim-chip { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; background: var(--teal-pale); color: #085041; white-space: nowrap; }
+  .comp-stats { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
+  .cstat-lbl { font-size: 10px; color: var(--muted); font-weight: 500; }
+  .cstat-val { font-size: 13px; font-weight: 600; color: var(--ink); margin-top: 1px; }
+  .comp-footer { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border); }
+  .ctag { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+  .ctag.pos { background: var(--teal-pale); color: #085041; }
+  .ctag.neg { background: var(--red-pale); color: var(--red); }
+  .ctag.neu { background: var(--surface); color: var(--muted); }
+  .comp-spacer { flex: 1; }
+  .btn-icon {
+    font-size: 11px; padding: 4px 10px; border-radius: var(--radius);
+    cursor: pointer; border: 1px solid var(--border-strong); background: var(--white);
+    color: var(--muted); transition: all .12s; font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .btn-icon:hover { background: var(--surface); color: var(--ink); }
+  .btn-icon.danger:hover { background: var(--red-pale); color: var(--red); border-color: #F1948A; }
+
+  /* ── PRICE CARD ── */
+  .price-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .price-card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .price-card-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .price-card-title i { font-size: 16px; color: var(--teal); }
+  .conf-chip { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: var(--blue-light); color: var(--accent); }
+  .price-main { text-align: center; padding: 10px 0 8px; }
+  .price-range { font-size: 28px; font-weight: 600; color: var(--ink); font-family: 'DM Serif Display', serif; }
+  .price-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .price-sub strong { color: var(--ink); }
+  .ci-track { height: 8px; background: var(--border); border-radius: 4px; margin: 12px 0 4px; position: relative; }
+  .ci-fill { height: 100%; border-radius: 4px; background: var(--teal); position: absolute; }
+  .ci-pin { width: 14px; height: 14px; background: var(--accent); border-radius: 50%; position: absolute; top: -3px; border: 2px solid var(--white); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .ci-ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+  .ci-note-line { font-size: 10px; color: var(--muted); margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+  .drivers-block { margin-top: 14px; }
+  .drivers-lbl { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+  .driver-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .driver-row:last-child { border: none; }
+  .driver-icon { font-size: 15px; width: 20px; text-align: center; }
+  .driver-lbl { flex: 1; font-size: 12px; color: var(--muted); }
+  .driver-val { font-size: 12px; font-weight: 600; }
+  .driver-val.pos { color: var(--teal); }
+  .driver-val.neg { color: var(--red); }
+
+  .action-row { display: flex; gap: 8px; margin-top: 14px; }
+  .btn-accept {
+    flex: 1; padding: 10px; background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background .15s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-accept:hover { background: #154360; }
+  .btn-accept:active { transform: scale(.98); }
+  .btn-override {
+    flex: 1; padding: 10px; background: var(--white); color: var(--amber);
+    border: 1px solid #E59866; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-override:hover { background: var(--amber-pale); }
+  .btn-escalate {
+    padding: 10px 14px; background: var(--white); color: var(--muted);
+    border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 13px;
+    cursor: pointer; transition: all .15s; font-family: 'DM Sans', sans-serif;
+  }
+  .btn-escalate:hover { background: var(--surface); }
+  .override-box {
+    margin-top: 10px; padding: 12px; background: var(--amber-pale);
+    border: 1px solid #E59866; border-radius: var(--radius);
+  }
+  .override-box label { font-size: 11px; font-weight: 600; color: var(--amber); display: block; margin-bottom: 5px; }
+  .override-box input, .override-box textarea {
+    width: 100%; margin-bottom: 8px; font-size: 13px; padding: 7px 10px;
+    border-radius: var(--radius); border: 1px solid #E59866;
+    background: var(--white); color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .override-box textarea { resize: none; height: 52px; }
+  .override-save {
+    width: 100%; padding: 8px; background: var(--amber); color: #fff;
+    border: none; border-radius: var(--radius); font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .saved-banner {
+    margin-top: 10px; padding: 10px 14px; border-radius: var(--radius);
+    background: var(--teal-pale); color: #085041;
+    font-size: 13px; font-weight: 600; text-align: center;
+    display: none; border: 1px solid #A9DFBF;
+  }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel {
+    width: 272px; min-width: 272px; background: var(--white);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .chat-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  .chat-msgs {
+    flex: 1; overflow-y: auto; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .chat-msgs::-webkit-scrollbar { width: 3px; }
+  .chat-msgs::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+  .msg { max-width: 90%; }
+  .msg.user { align-self: flex-end; }
+  .msg.ai  { align-self: flex-start; }
+  .msg-bubble { padding: 8px 11px; border-radius: var(--radius); font-size: 12px; line-height: 1.55; }
+  .msg.user .msg-bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 3px; }
+  .msg.ai  .msg-bubble { background: var(--off-white); border: 1px solid var(--border); border-bottom-left-radius: 3px; color: var(--ink); }
+  .msg-time { font-size: 10px; color: var(--muted-light); margin-top: 2px; }
+  .msg.user .msg-time { text-align: right; }
+  .typing { display: flex; gap: 3px; padding: 2px 0; }
+  .typing span { width: 5px; height: 5px; background: var(--muted-light); border-radius: 50%; animation: blink 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,100%{opacity:.2} 50%{opacity:1} }
+
+  .quick-chips {
+    padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 5px;
+    border-top: 1px solid var(--border);
+  }
+  .chip {
+    font-size: 10px; padding: 4px 9px; border-radius: 20px;
+    border: 1px solid var(--border-strong); background: var(--white);
+    color: var(--muted); cursor: pointer; transition: all .12s;
+    white-space: nowrap; font-family: 'DM Sans', sans-serif;
+  }
+  .chip:hover { background: var(--blue-light); color: var(--accent); border-color: #AED6F1; }
+
+  .chat-input-wrap { padding: 8px 10px; border-top: 1px solid var(--border); display: flex; gap: 6px; align-items: flex-end; }
+  .chat-input-wrap textarea {
+    flex: 1; resize: none; font-size: 12px; min-height: 36px; max-height: 80px;
+    font-family: 'DM Sans', sans-serif; padding: 8px 10px;
+    border-radius: var(--radius); border: 1px solid var(--border-strong);
+    background: var(--white); color: var(--ink); line-height: 1.4;
+  }
+  .chat-input-wrap textarea:focus { outline: none; border-color: var(--blue); }
+  .send-btn {
+    width: 34px; height: 34px; background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+    flex-shrink: 0; transition: background .15s;
+  }
+  .send-btn:hover { background: #154360; }
+
+  /* ── FEEDBACK SECTION ── */
+  .fb-section { padding: 12px 14px; border-top: 1px solid var(--border); }
+  .fb-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  .stars { display: flex; gap: 3px; margin-bottom: 8px; }
+  .star { font-size: 22px; cursor: pointer; color: var(--border-strong); transition: color .1s; user-select: none; }
+  .star.lit { color: #D4AC0D; }
+  .fb-textarea {
+    width: 100%; font-size: 12px; padding: 7px 9px; resize: none; height: 50px;
+    border-radius: var(--radius); border: 1px solid var(--border-strong);
+    background: var(--white); color: var(--ink);
+    font-family: 'DM Sans', sans-serif; margin-bottom: 7px;
+  }
+  .fb-textarea:focus { outline: none; border-color: var(--blue); }
+  .btn-fb {
+    width: 100%; padding: 7px; background: var(--white); color: var(--muted);
+    border: 1px solid var(--border-strong); border-radius: var(--radius);
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: all .12s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-fb:hover { background: var(--teal-pale); color: #085041; border-color: #A9DFBF; }
+  .fb-thanks { font-size: 11px; color: var(--teal); text-align: center; margin-top: 6px; display: none; font-weight: 500; }
+
+  /* ── HISTORY SCREEN ── */
+  .hist-screen { flex-direction: column; padding: 24px; gap: 0; background: var(--surface); overflow-y: auto; }
+  .hist-title { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .hist-title i { color: var(--teal); }
+  .hist-list { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .hist-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--border); }
+  .hist-row:last-child { border: none; }
+  .hist-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--blue-light); display: flex; align-items: center;
+    justify-content: center; font-size: 14px; font-weight: 600; color: var(--accent); flex-shrink: 0;
+  }
+  .hist-prop { font-size: 13px; font-weight: 600; }
+  .hist-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .hist-price { font-size: 15px; font-weight: 600; margin-right: 8px; }
+  .hist-tag { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .hist-tag.accepted { background: var(--teal-pale); color: #085041; }
+  .hist-tag.overridden { background: var(--amber-pale); color: #633806; }
+  .hist-empty { padding: 48px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+  /* ── ANIMATIONS ── */
+  .comp-card { animation: slideUp .3s ease; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── TOOLTIP ── */
+  [data-tip] { position: relative; cursor: default; }
+  [data-tip]:hover::after {
+    content: attr(data-tip); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; font-size: 10px; padding: 4px 8px;
+    border-radius: 4px; white-space: nowrap; z-index: 999; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">R</div>
+    RentIQ
+  </div>
+  <span class="topbar-badge badge-ai"><i class="ti ti-brain" style="font-size:10px;margin-right:3px"></i>AI Pricer</span>
+  <span class="topbar-badge badge-live"><i class="ti ti-map-pin" style="font-size:10px;margin-right:3px"></i>Gurugram Market</span>
+  <div class="topbar-nav">
+    <div class="nav-tab active" id="tab-pricing" onclick="switchTab('pricing')">
+      <i class="ti ti-home"></i> Pricing workspace
+    </div>
+    <div class="nav-tab" id="tab-history" onclick="switchTab('history')">
+      <i class="ti ti-history"></i> Session history
+    </div>
+  </div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-user">
+    <span>Riya Mehta · Pricing Analyst</span>
+    <div class="avatar">RM</div>
+  </div>
+</div>
+
+<div class="workspace">
+
+  <!-- ══════════════════ PRICING SCREEN ══════════════════ -->
+  <div class="screen active" id="screen-pricing">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar">
+      <div class="panel-hdr"><i class="ti ti-map-pin"></i>Subject property</div>
+      <div class="form-block">
+        <div class="form-row">
+          <label class="form-label">Society / Address</label>
+          <input type="text" value="B-204, Magnolia Residency, Sector 43" id="prop-addr">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">BHK</label>
+            <select id="prop-bhk" onchange="recalc()">
+              <option>3 BHK</option><option>2 BHK</option><option>4 BHK</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Floor</label>
+            <select id="prop-floor" onchange="recalc()">
+              <option>2nd</option><option>1st</option><option>3rd</option><option>4th+</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Area (sqft)</label>
+            <input type="number" value="1650" id="prop-sqft" onchange="recalc()">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Building age</label>
+            <input type="number" value="8" id="prop-age" onchange="recalc()">
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Furnishing</label>
+          <select id="prop-furn" onchange="recalc()">
+            <option>Semi-furnished</option><option>Fully furnished</option><option>Unfurnished</option>
+          </select>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <label class="form-label">Sector type</label>
+          <select id="prop-sector" onchange="recalc()">
+            <option>DLF Phase 4 (premium)</option><option>Sohna Road (mid)</option><option>Golf Course Ext (premium)</option><option>New Gurugram (affordable)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-block">
+        <button class="enrich-btn" onclick="runEnrich()">
+          <i class="ti ti-sparkles"></i> Run AI signal enrichment
+        </button>
+      </div>
+
+      <div class="panel-hdr"><i class="ti ti-sparkles"></i>AI location signals <span style="margin-left:auto;font-size:9px;font-weight:400;text-transform:none;letter-spacing:0">82% confidence</span></div>
+      <div class="signals-wrap">
+        <div class="signals-grid">
+          <div class="sig-card" data-tip="Source: Google Maps API + CBSE data">
+            <div class="sig-label"><i class="ti ti-school"></i>School quality</div>
+            <div class="sig-val pos">8.4 / 10</div>
+            <div class="sig-bar"><div class="sig-bar-fill" style="width:84%;background:#148F77"></div></div>
+            <div class="sig-src">GD Goenka 0.8km · CBSE</div>
+          </div>
+          <div class="sig-card" data-tip="Source: OSM + CPCB noise zones">
+            <div class="sig-label"><i class="ti ti-volume"></i>Road noise</div>
+            <div class="sig-val warn">Medium</div>
+            <div class="sig-bar"><div class="sig-bar-fill" style="width:48%;background:#CA6F1E"></div></div>
+            <div class="sig-src">Golf Course Rd 1.2km</div>
+          </div>
+          <div class="sig-card" data-tip="Source: NDMA hazard map + IMD rainfall">
+            <div class="sig-label"><i class="ti ti-droplet"></i>Flood risk</div>
+            <div class="sig-val pos">Low</div>
+            <div class="sig-bar"><div class="sig-bar-fill" style="width:15%;background:#148F77"></div></div>
+            <div class="sig-src">NDMA: +3.2m elev.</div>
+          </div>
+          <div class="sig-card" data-tip="Source: Sentinel-2 NDVI (ESA Copernicus)">
+            <div class="sig-label"><i class="ti ti-trees"></i>Green cover</div>
+            <div class="sig-val pos">High NDVI</div>
+            <div class="sig-bar"><div class="sig-bar-fill" style="width:78%;background:#148F77"></div></div>
+            <div class="sig-src">Sentinel-2 · Aravalli</div>
+          </div>
+          <div class="sig-card" data-tip="Source: DMRC station API">
+            <div class="sig-label"><i class="ti ti-train"></i>Metro access</div>
+            <div class="sig-val warn">3.1 km</div>
+            <div class="sig-bar"><div class="sig-bar-fill" style="width:35%;background:#CA6F1E"></div></div>
+            <div class="sig-src">HUDA City Centre</div>
+          </div>
+          <div class="sig-card" data-tip="Source: Foursquare + OSM POIs">
+            <div class="sig-label"><i class="ti ti-building-store"></i>Amenity density</div>
+            <div class="sig-val pos">9 POIs / km²</div>
+            <div class="sig-bar"><div class="sig-bar-fill" style="width:72%;background:#148F77"></div></div>
+            <div class="sig-src">Foursquare + OSM</div>
+          </div>
+        </div>
+      </div>
+      <div class="ci-note">
+        <i class="ti ti-info-circle" style="font-size:12px;margin-right:3px;color:#2471A3"></i>
+        CI method: Bayesian leaf-node variance × signal weight · 80% confidence · Each signal narrows CI by 28–38%
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="center">
+      <div class="notif" id="notif">
+        <i class="ti ti-sparkles"></i>
+        AI retrieved 6 comparable properties via FAISS embedding similarity + NHB RESIDEX sector-level pricing. Review, remove or adjust below.
+      </div>
+
+      <div class="section-hdr">
+        <div class="section-hdr-title"><i class="ti ti-building-community"></i>Comparable properties</div>
+        <span class="count-badge" id="comp-count">6 active</span>
+        <div style="flex:1"></div>
+        <button class="btn-icon" onclick="addComp()"><i class="ti ti-plus" style="font-size:12px"></i> Add comp</button>
+      </div>
+      <div id="comps-list"></div>
+
+      <!-- PRICE CARD -->
+      <div class="price-card">
+        <div class="price-card-hdr">
+          <div class="price-card-title"><i class="ti ti-chart-line"></i>AI price recommendation</div>
+          <span class="conf-chip">82% confidence</span>
+        </div>
+        <div class="price-main">
+          <div class="price-range" id="price-display">₹65,000 – ₹72,000</div>
+          <div class="price-sub">Suggested: <strong id="price-mid">₹68,500</strong> /month &nbsp;·&nbsp; ₹41.5 / sqft</div>
+        </div>
+        <div class="ci-track">
+          <div class="ci-fill" style="left:20%;width:50%"></div>
+          <div class="ci-pin" style="left:calc(20% + 25% - 7px)"></div>
+        </div>
+        <div class="ci-ticks"><span>₹55k</span><span>₹62k</span><span>₹68.5k ★</span><span>₹74k</span><span>₹85k</span></div>
+        <div class="ci-note-line"><i class="ti ti-info-circle" style="font-size:13px;color:#2471A3"></i>Confidence interval narrows as more hyper-local signals are confirmed</div>
+
+        <div class="drivers-block">
+          <div class="drivers-lbl">Key price drivers</div>
+          <div id="drivers-list"></div>
+        </div>
+
+        <div id="action-area">
+          <div class="action-row">
+            <button class="btn-accept" id="accept-btn" onclick="acceptPrice()">
+              <i class="ti ti-check"></i> Accept ₹68,500
+            </button>
+            <button class="btn-override" onclick="showOverride()">
+              <i class="ti ti-edit"></i> Override
+            </button>
+            <button class="btn-escalate" onclick="escalate()">
+              <i class="ti ti-arrow-up"></i>
+            </button>
+          </div>
+        </div>
+        <div id="override-area"></div>
+        <div class="saved-banner" id="saved-banner">
+          <i class="ti ti-check"></i>&nbsp; Price saved — decision logged for model retraining pipeline
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="panel-hdr"><i class="ti ti-messages"></i>AI pricing assistant</div>
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chat-msgs"></div>
+        <div class="quick-chips">
+          <button class="chip" onclick="sendChip('Why was this price suggested?')">Why this price?</button>
+          <button class="chip" onclick="sendChip('Remove noisy comps near Sohna Road')">Remove Sohna Rd</button>
+          <button class="chip" onclick="sendChip('How does school proximity affect the CI?')">School & CI</button>
+          <button class="chip" onclick="sendChip('What if I add a metro-adjacent comp?')">Metro comp?</button>
+          <button class="chip" onclick="sendChip('Show only fully furnished comps')">Fully furnished only</button>
+        </div>
+        <div class="chat-input-wrap">
+          <textarea id="chat-input" placeholder="Ask anything about pricing, comps or signals…" rows="1" onkeydown="handleKey(event)"></textarea>
+          <button class="send-btn" onclick="sendMsg()" aria-label="Send">
+            <i class="ti ti-send"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-hdr"><i class="ti ti-star"></i>Rate this recommendation</div>
+      <div class="fb-section">
+        <div class="fb-label">How relevant were the comps?</div>
+        <div class="stars" id="stars"></div>
+        <textarea class="fb-textarea" id="fb-text" placeholder="What could improve? Optional — your feedback trains the model"></textarea>
+        <button class="btn-fb" onclick="submitFB()"><i class="ti ti-check" style="font-size:12px;margin-right:3px"></i>Submit feedback</button>
+        <div class="fb-thanks" id="fb-thanks"><i class="ti ti-check" style="font-size:12px"></i> Saved to retraining pipeline</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ HISTORY SCREEN ══════════════════ -->
+  <div class="screen hist-screen" id="screen-history">
+    <div class="hist-title"><i class="ti ti-history"></i>Session pricing history</div>
+    <div class="hist-list" id="hist-list">
+      <div class="hist-empty">No pricing decisions saved yet. Accept or override a price to log it here.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const COMPS = [
+  {id:1,name:"A-304, Palm Drive",sector:"Sector 43, DLF Phase 4",bhk:"3BHK",sqft:1580,rent:67000,furn:"Semi",floor:"3rd",age:"7yr",sim:94,active:true,
+   tags:[{l:"Floor +1",s:"pos"},{l:"Size −70 sqft",s:"neg"},{l:"Same locality",s:"neu"}]},
+  {id:2,name:"C-12, Magnolia Crescent",sector:"Sector 43, DLF Phase 4",bhk:"3BHK",sqft:1700,rent:72000,furn:"Semi",floor:"4th",age:"9yr",sim:91,active:true,
+   tags:[{l:"Same society",s:"neu"},{l:"Larger +50 sqft",s:"pos"},{l:"Higher floor",s:"pos"}]},
+  {id:3,name:"F-118, The Belvedere",sector:"Sector 42, DLF Phase 4",bhk:"3BHK",sqft:1650,rent:69500,furn:"Fully",floor:"2nd",age:"6yr",sim:87,active:true,
+   tags:[{l:"Fully furnished",s:"pos"},{l:"Newer −2yr",s:"pos"},{l:"0.4km away",s:"neg"}]},
+  {id:4,name:"B-89, Sohna Road Apt",sector:"Sector 48, Sohna Road",bhk:"3BHK",sqft:1700,rent:63000,furn:"Semi",floor:"1st",age:"11yr",sim:78,active:true,
+   tags:[{l:"High noise ⚠",s:"neg"},{l:"Older +3yr",s:"neg"},{l:"3.2km away",s:"neg"}]},
+  {id:5,name:"D-201, Greenwood Apts",sector:"Sector 56, Golf Ext",bhk:"3BHK",sqft:1620,rent:62000,furn:"Unfurnished",floor:"2nd",age:"12yr",sim:74,active:true,
+   tags:[{l:"Unfurnished",s:"neg"},{l:"Older +4yr",s:"neg"},{l:"Park view",s:"pos"}]},
+  {id:6,name:"A-501, Park Avenue",sector:"Sector 54, Golf Crs Rd",bhk:"3BHK",sqft:1750,rent:76000,furn:"Fully",floor:"5th",age:"5yr",sim:71,active:true,
+   tags:[{l:"Premium location",s:"pos"},{l:"Fully furnished",s:"pos"},{l:"2.8km away",s:"neg"}]},
+];
+
+const DRIVERS = [
+  {icon:"ti-school",   label:"Top school proximity — GD Goenka 0.8km (CBSE 8.4/10)", val:"+₹3,200", cls:"pos"},
+  {icon:"ti-trees",    label:"High green cover — Aravalli belt (NDVI Sentinel-2)",    val:"+₹1,800", cls:"pos"},
+  {icon:"ti-building", label:"Society quality & amenity score (9 POIs/km²)",          val:"+₹1,500", cls:"pos"},
+  {icon:"ti-train",    label:"Metro distance penalty — HUDA City Centre 3.1km",       val:"−₹2,100", cls:"neg"},
+  {icon:"ti-volume",   label:"Moderate road noise — Golf Course Rd 1.2km (CPCB B)",  val:"−₹800",   cls:"neg"},
+  {icon:"ti-home",     label:"Semi-furnished vs fully furnished comps",               val:"−₹2,500", cls:"neg"},
+];
+
+const AI = {
+  "Why was this price suggested?":
+    "Based on 6 active comps in DLF Phase 4 & nearby sectors, median comparable rent is ₹68,200/mo (NHB RESIDEX Q2 2025 anchor: Gurugram +5.2% QoQ). Location adjustments applied: +₹3,200 school quality (GD Goenka 0.8km), +₹1,800 green cover, −₹2,100 metro distance, −₹800 noise. Confidence is 82% — CI narrows from ±₹3,500 → ±₹1,800 once school & flood signals are confirmed via Bayesian update.",
+  "Remove noisy comps near Sohna Road":
+    "Removing B-89 (Sohna Road Apt, 78% match) — it carries a 3× noise exposure vs your property and was pulling the lower bound down artificially. Recalculating with 5 comps... Updated range shifts up ~₹1,700. Reason logged for model retraining: 'Noise disparity too high for valid comparison.'",
+  "How does school proximity affect the CI?":
+    "School quality is the highest-weight signal in the model. GD Goenka at 0.8km (CBSE score 8.4/10) narrows CI from ±₹3,500 → ±₹2,200 — a 37% reduction. The +₹3,200 premium holds when school is within 800m. Beyond 1.5km it drops to +₹800 and CI widens again. This is the single largest positive contributor for this property.",
+  "What if I add a metro-adjacent comp?":
+    "A Rapid Metro-adjacent 3BHK in Sector 56 is renting at ₹73,500 — but that location carries a ₹4k–5k metro premium not applicable here. Adding it would shift suggested price +₹900 but reduce confidence to 76% (CI widens). I recommend keeping it as a reference ceiling, not an active comp.",
+  "Show only fully furnished comps":
+    "Filtering to fully furnished comps only: F-118 Belvedere (₹69,500) and A-501 Park Avenue (₹76,000). Filtered range: ₹69,500–₹76,000 — about ₹3,500 above the full-comp median. Since your property is semi-furnished, I recommend using these as the upper-bound reference, not primary comps.",
+};
+
+let comps = COMPS.map(c=>({...c}));
+let starRating = 0;
+let history = [];
+let priceBase = {lo:65000,hi:72000,mid:68500};
+
+const INR = n => "₹"+Math.round(n).toLocaleString('en-IN');
+
+function renderComps(){
+  const active = comps.filter(c=>c.active).length;
+  document.getElementById('comp-count').textContent = active+" active";
+  document.getElementById('comps-list').innerHTML = comps.map(c=>`
+    <div class="comp-card ${c.active?'':'removed'}" style="margin-bottom:10px">
+      <div class="comp-hdr">
+        <div>
+          <div class="comp-name">${c.name}</div>
+          <div class="comp-sector">${c.sector}</div>
+        </div>
+        <span class="sim-chip">${c.sim}% match</span>
+      </div>
+      <div class="comp-stats">
+        <div><div class="cstat-lbl">Rent/mo</div><div class="cstat-val">${INR(c.rent)}</div></div>
+        <div><div class="cstat-lbl">Size</div><div class="cstat-val">${c.sqft} sqft</div></div>
+        <div><div class="cstat-lbl">Floor</div><div class="cstat-val">${c.floor}</div></div>
+        <div><div class="cstat-lbl">Furnish</div><div class="cstat-val">${c.furn}</div></div>
+        <div><div class="cstat-lbl">Age</div><div class="cstat-val">${c.age}</div></div>
+      </div>
+      <div class="comp-footer">
+        ${c.tags.map(t=>`<span class="ctag ${t.s}">${t.l}</span>`).join('')}
+        <span class="comp-spacer"></span>
+        ${c.active
+          ?`<button class="btn-icon danger" onclick="toggleComp(${c.id})"><i class="ti ti-trash" style="font-size:12px"></i> Remove</button>`
+          :`<button class="btn-icon" onclick="toggleComp(${c.id})"><i class="ti ti-refresh" style="font-size:12px"></i> Restore</button>`
+        }
+      </div>
+    </div>`
+  ).join('');
+}
+
+function renderDrivers(){
+  document.getElementById('drivers-list').innerHTML = DRIVERS.map(d=>`
+    <div class="driver-row">
+      <i class="ti ${d.icon} driver-icon" style="color:${d.cls==='pos'?'#148F77':'#922B21'}"></i>
+      <span class="driver-lbl">${d.label}</span>
+      <span class="driver-val ${d.cls}">${d.val}</span>
+    </div>`
+  ).join('');
+}
+
+function renderStars(){
+  document.getElementById('stars').innerHTML=[1,2,3,4,5].map(n=>
+    `<span class="star ${n<=starRating?'lit':''}" onclick="setStar(${n})">★</span>`
+  ).join('');
+}
+function setStar(n){starRating=n;renderStars();}
+
+function toggleComp(id){
+  const c=comps.find(c=>c.id===id);
+  c.active=!c.active;
+  renderComps(); recalc();
+  const n=comps.filter(c=>c.active).length;
+  addAI(c.active
+    ? `Restored ${c.name}. Recalculating with ${n} active comps.`
+    : `Removed ${c.name} from comp set. Recalculating price with ${n} remaining comps. Reason logged for model retraining.`
+  );
+}
+
+function recalc(){
+  const active=comps.filter(c=>c.active);
+  if(!active.length)return;
+  const rents=active.map(c=>c.rent).sort((a,b)=>a-b);
+  const med=rents[Math.floor(rents.length/2)];
+  const lo=Math.round((med-3200)/500)*500;
+  const hi=Math.round((med+3200)/500)*500;
+  const mid=Math.round((lo+hi)/2/500)*500;
+  priceBase={lo,hi,mid};
+  document.getElementById('price-display').textContent=INR(lo)+" – "+INR(hi);
+  document.querySelector('.price-sub').innerHTML=`Suggested: <strong id="price-mid">${INR(mid)}</strong> /month &nbsp;·&nbsp; ₹${Math.round(mid/1650)} / sqft`;
+  document.getElementById('accept-btn').innerHTML=`<i class="ti ti-check"></i> Accept ${INR(mid)}`;
+}
+
+function addUserMsg(text){
+  const el=document.createElement('div');
+  el.className='msg user';
+  el.innerHTML=`<div class="msg-bubble">${escHTML(text)}</div><div class="msg-time">Just now</div>`;
+  document.getElementById('chat-msgs').appendChild(el);
+  scrollChat();
+}
+
+function addAI(text){
+  const el=document.createElement('div');
+  el.className='msg ai';
+  el.innerHTML=`<div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('chat-msgs').appendChild(el);
+  scrollChat();
+  setTimeout(()=>{el.querySelector('.msg-bubble').textContent=text; scrollChat();},850);
+}
+
+function scrollChat(){const c=document.getElementById('chat-msgs');c.scrollTop=c.scrollHeight;}
+
+function escHTML(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function sendMsg(){
+  const inp=document.getElementById('chat-input');
+  const text=inp.value.trim();
+  if(!text)return;
+  inp.value='';
+  addUserMsg(text);
+  const resp=AI[text]||genericResp(text);
+  setTimeout(()=>{
+    addAI(resp);
+    if(text.includes('Sohna Road')){
+      const s=comps.find(c=>c.name.includes('Sohna'));
+      if(s&&s.active){s.active=false;renderComps();recalc();}
+    }
+    if(text.toLowerCase().includes('fully furnished')){
+      comps.filter(c=>c.furn!=='Fully'&&c.active).forEach(c=>c.active=false);
+      renderComps();recalc();
+    }
+  },300);
+}
+
+function genericResp(text){
+  const t=text.toLowerCase();
+  if(t.includes('metro'))return"Metro distance (3.1km to HUDA City Centre) applies a −₹2,100 penalty. Properties within 800m of Rapid Metro carry a +₹4k–5k premium. Your property sits between both zones — removing the distance penalty would shift the price up to ~₹70,600.";
+  if(t.includes('school'))return"GD Goenka at 0.8km is the primary driver of the school quality score (8.4/10, CBSE). DPS Sector 45 (1.4km) and Heritage (2.1km) also factor in. Together: +₹3,200 to the suggested price. CI narrows by 37% when school signal is confirmed.";
+  if(t.includes('flood')||t.includes('water'))return"Sector 43 sits at +3.2m above the NDMA flood threshold. DLF Phase 4 has no recorded waterlogging vs Sectors 45 and 47. Low-risk rating contributes a small premium and narrows the CI's downside by ~₹400.";
+  if(t.includes('confidence')||t.includes('ci'))return"The 82% CI reflects 6 active comps + 4 confirmed signals. School quality narrows CI by 37%, flood risk by 28%, green cover by 18%, noise contour by 22%. With all 6 signals confirmed, CI narrows to ±₹1,200 from an initial ±₹3,500 (Bayesian leaf-node variance × signal weight method).";
+  if(t.includes('remove')||t.includes('delete'))return"Which comp would you like to remove? Click the Remove button on any comp card, or describe the property — e.g. 'Remove the unfurnished comp' — and I'll handle it instantly.";
+  if(t.includes('nhb')||t.includes('residex'))return"NHB RESIDEX Q2 2025 shows Gurugram leading North India at +5.2% QoQ housing price growth. This anchor is used to calibrate the sector-level baseline before applying property-specific adjustments. HRERA Gurugram pipeline: 35,455 new units in 2025 — supply pressure is modest for DLF Phase 4.";
+  return"Noted. I've logged this as session context. Would you like me to adjust the comp set, explain a specific price driver, or explore what happens when a signal changes?";
+}
+
+function sendChip(text){document.getElementById('chat-input').value=text;sendMsg();}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+
+function acceptPrice(){
+  document.getElementById('action-area').style.display='none';
+  document.getElementById('saved-banner').style.display='block';
+  addAI(`Price accepted: ${INR(priceBase.mid)}/mo saved with ${comps.filter(c=>c.active).length} active comps. Decision logged with full signal snapshot for weekly model retraining pipeline.`);
+  addHistory("B-204, Magnolia Residency", INR(priceBase.mid), "Accepted");
+}
+
+function showOverride(){
+  document.getElementById('override-area').innerHTML=`
+    <div class="override-box">
+      <label>Set your price (₹/month)</label>
+      <input type="number" id="ov-price" value="${priceBase.mid}" min="20000" max="200000" step="500" placeholder="₹ per month">
+      <label style="margin-top:4px">Reason for override (required for audit)</label>
+      <textarea id="ov-reason" placeholder="e.g. Landlord has confirmed recent upgrades not visible in listing…"></textarea>
+      <button class="override-save" onclick="saveOverride()"><i class="ti ti-check" style="font-size:12px;margin-right:4px"></i>Save override</button>
+    </div>`;
+}
+
+function saveOverride(){
+  const p=parseInt(document.getElementById('ov-price').value);
+  const r=document.getElementById('ov-reason').value.trim();
+  if(!r){alert("Reason is required — it's logged for the audit trail and model learning.");return;}
+  const delta=p-priceBase.mid;
+  document.getElementById('override-area').innerHTML=`
+    <div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:#FDEBD0;border:1px solid #E59866;font-size:12px;color:#633806">
+      <strong>Override saved:</strong> ${INR(p)}/mo &nbsp;·&nbsp; Delta: ${delta>0?'+':''}${INR(delta)} &nbsp;·&nbsp; Reason: "${escHTML(r)}"
+    </div>`;
+  addAI(`Override recorded: ${INR(p)}/mo (AI suggested ${INR(priceBase.mid)}). Delta ${delta>0?'+':''}${INR(delta)} tagged with reason and stored as a labelled training pair for Sector 43 model fine-tuning.`);
+  addHistory("B-204, Magnolia Residency", INR(p), "Overridden");
+}
+
+function escalate(){
+  addAI("Escalated to Senior Pricing Manager. A review request has been sent with the current comp set, location signals, and AI recommendation attached as context.");
+}
+
+function runEnrich(){
+  addAI("Re-running enrichment… School: GD Goenka 0.8km ✓ (CBSE 8.4) · Flood: Low ✓ (NDMA +3.2m) · Noise: Medium (CPCB Zone B) · Green cover: High NDVI ✓ (Sentinel-2) · Metro: 3.1km (DMRC) · Amenity: 9 POIs ✓. All 6 signals confirmed. CI updated to 82% confidence.");
+}
+
+function addComp(){
+  addAI("Describe the comp you want to add — e.g. '3BHK in Sector 42, fully furnished, below ₹75k' — or paste a NoBroker / Gurugram.rent listing URL. I'll fetch, score, and slot it into the comp set.");
+}
+
+function addHistory(prop,price,status){
+  history.push({prop,price,status,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  if(document.getElementById('screen-history').classList.contains('active'))renderHistory();
+}
+
+function renderHistory(){
+  const el=document.getElementById('hist-list');
+  if(!history.length){
+    el.innerHTML='<div class="hist-empty">No pricing decisions saved yet. Accept or override a price to log it here.</div>';
+    return;
+  }
+  el.innerHTML=history.map(h=>`
+    <div class="hist-row">
+      <div class="hist-avatar">B</div>
+      <div style="flex:1">
+        <div class="hist-prop">${h.prop}</div>
+        <div class="hist-meta">${h.time} &nbsp;·&nbsp; ${h.status}</div>
+      </div>
+      <div class="hist-price">${h.price}/mo</div>
+      <span class="hist-tag ${h.status==='Accepted'?'accepted':'overridden'}">${h.status}</span>
+    </div>`
+  ).join('');
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('screen-'+tab).classList.add('active');
+  if(tab==='history')renderHistory();
+}
+
+function submitFB(){
+  document.getElementById('fb-thanks').style.display='block';
+  document.getElementById('fb-text').value='';
+  setTimeout(()=>document.getElementById('fb-thanks').style.display='none',3500);
+}
+
+/* ── INIT ── */
+renderComps();
+renderDrivers();
+renderStars();
+addAI("Hello Riya! I've analysed B-204, Magnolia Residency and retrieved 6 comparable properties using FAISS embedding similarity + NHB RESIDEX Q2 2025 sector anchors. Recommendation: ₹68,500/mo (82% confidence). Key upside: GD Goenka school proximity (+₹3,200). Key drag: metro distance −₹2,100. Ask me anything or remove a comp to recalculate.");
+</script>
+</body>
+</html>
